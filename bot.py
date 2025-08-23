@@ -1,42 +1,3 @@
-import os
-import re
-import sqlite3
-import logging
-from pathlib import Path
-from aiogram import Bot, Dispatcher, types
-from aiogram.types import (
-    BotCommand,
-    InlineKeyboardButton,
-    InlineKeyboardMarkup,
-    Message,
-    CallbackQuery,
-)
-from aiogram.exceptions import TelegramBadRequest, TelegramNetworkError
-from aiogram.fsm.context import FSMContext
-from aiogram.fsm.state import State
-from aiogram.utils.keyboard import InlineKeyboardBuilder
-from dotenv import load_dotenv
-
-load_dotenv()
-
-# 默认环境变量回退
-BOT_TOKEN = os.getenv("BOT_TOKEN") or "REPLACE_ME"
-DEFAULT_CHANNEL = os.getenv("DEFAULT_CHANNEL") or "-1000000000000"
-DB_FILE = os.getenv("DB_FILE") or "channel_helper_pro.db"
-
-# normalize_keyword 示例函数
-def normalize_keyword(text: str) -> str:
-    return re.sub(r"[^\w\d]", "", text.strip().lower())
-
-# 配置日志输出
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s [%(levelname)s] %(message)s",
-    handlers=[logging.StreamHandler()]
-)
-
-
-
 # -*- coding: utf-8 -*-
 # Channel Navigator Bot · Combined Full Version (aiogram v3)
 #
@@ -50,38 +11,56 @@ logging.basicConfig(
 #
 # Author: Combined by ChatGPT
 
+# ========== 标准库导入 ==========
 import os
-import asyncio
-import logging
+import re
 import sqlite3
+import logging
+import asyncio
 import datetime
 import json
+from pathlib import Path
 from typing import Dict, List, Tuple, Optional, Set
+
+# ========== 第三方库导入 ==========
+from dotenv import load_dotenv
+
+# ========== aiogram 导入 ==========
+from aiogram import Bot, Dispatcher, types, F
+from aiogram.client.default import DefaultBotProperties
+from aiogram.enums import ParseMode
+from aiogram.filters import Command
+from aiogram.types import (
+    BotCommand,
+    InlineKeyboardButton,
+    InlineKeyboardMarkup,
+    Message,
+    CallbackQuery,
+    FSInputFile,
+    InputMediaPhoto,
+)
+from aiogram.exceptions import TelegramBadRequest, TelegramNetworkError
+from aiogram.fsm.context import FSMContext
+from aiogram.fsm.state import State, StatesGroup
+from aiogram.utils.keyboard import InlineKeyboardBuilder
+
+load_dotenv()
+
+
+
+
 
 # --- auto-fallback for build_bank_detail_kb (injected) ---
 try:
     build_bank_detail_kb  # type: ignore  # noqa: F821
 except NameError:
-    from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
     def build_bank_detail_kb(bank_name: str):
         return InlineKeyboardMarkup(
             inline_keyboard=[[InlineKeyboardButton(text="⬅ 返回", callback_data="go_home")]]
         )
 # --- end fallback ---
 
-from aiogram import Bot, Dispatcher, F
-from aiogram.client.default import DefaultBotProperties
-from aiogram.enums import ParseMode
-from aiogram.filters import Command
-from aiogram.types import (
-    InlineKeyboardMarkup, InlineKeyboardButton,
-    BotCommand, CallbackQuery, Message, FSInputFile
-)
-from aiogram.exceptions import TelegramBadRequest, TelegramNetworkError
-from aiogram.fsm.context import FSMContext
-from aiogram.fsm.state import State, StatesGroup
-from aiogram import types
-import re, datetime, sqlite3
+
 # ========== 日志 ==========
 logging.basicConfig(
     level=logging.INFO,
@@ -903,8 +882,6 @@ async def cmd_set_channel(m: Message):
     await m.reply("✅ 已更新默认频道。")
 
 # 放在其它 @dp.message(...) 之前更稳妥
-from aiogram import F
-import re, datetime, sqlite3
 
 @dp.message(F.text.regexp(r"^(?:查询|查)\s*(.+)$"))
 async def on_query_kw(m: types.Message):
@@ -1395,7 +1372,6 @@ if __name__ == "__main__":
 
 
 # ===== helper: 国家大行二级菜单键盘(缺失则自动补) =====
-from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton as _IKB
 
 def build_bank_detail_kb(bank_name: str) -> InlineKeyboardMarkup:
     detail = BANK_DETAIL.get(bank_name, [])
@@ -1405,10 +1381,10 @@ def build_bank_detail_kb(bank_name: str) -> InlineKeyboardMarkup:
         for j in range(2):
             if i + j < len(detail):
                 t, u = detail[i + j]
-                row.append(_IKB(text=t, url=u))
+                row.append(InlineKeyboardButton(text=t, url=u))
         if row:
             rows.append(row)
-    rows.append([_IKB(text="⬅ 返回首页", callback_data="go_home")])
+    rows.append([InlineKeyboardButton(text="⬅ 返回首页", callback_data="go_home")])
     return InlineKeyboardMarkup(inline_keyboard=rows)
 
 
@@ -1640,10 +1616,6 @@ async def on_startup(bot: Bot):
 
 # ========== 自动推送功能(定时发送菜单或信息到频道) ==========
 
-import asyncio
-from aiogram import asyncio as aio_asyncio
-from aiogram.enums import ParseMode
-
 async def scheduled_broadcast():
     while True:
         try:
@@ -1678,9 +1650,6 @@ async def start_broadcast_loop(bot: Bot):
 
 
 # ========== 📢 广告系统模块 ==========
-from aiogram.types import InputMediaPhoto
-from datetime import datetime
-import sqlite3
 
 DB_FILE = os.getenv("DB_FILE", "./ad_tracking.db")
 
