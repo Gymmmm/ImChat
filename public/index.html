@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>ImChat</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; padding: 20px; }
+    #messages { list-style: none; padding: 0; }
+    #messages li { margin: 5px 0; }
+  </style>
+</head>
+<body>
+  <h1>ImChat</h1>
+  <ul id="messages"></ul>
+  <form id="form" autocomplete="off">
+    <input id="input" /><button>Send</button>
+  </form>
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const socket = io();
+    const form = document.getElementById('form');
+    const input = document.getElementById('input');
+    const messages = document.getElementById('messages');
+
+    function addMessage(message) {
+      const item = document.createElement('li');
+      const date = new Date(message.time);
+      item.textContent = `[${date.toLocaleTimeString()}] ${message.text}`;
+      messages.appendChild(item);
+      window.scrollTo(0, document.body.scrollHeight);
+    }
+
+    socket.on('chat history', (history) => {
+      messages.innerHTML = '';
+      history.forEach(addMessage);
+    });
+
+    socket.on('chat message', addMessage);
+
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      if (input.value) {
+        socket.emit('chat message', input.value);
+        input.value = '';
+      }
+    });
+  </script>
+</body>
+</html>
